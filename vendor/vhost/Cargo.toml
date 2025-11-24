@@ -1,0 +1,40 @@
+[package]
+name = "vhost"
+version = "0.12.0"
+keywords = ["vhost", "vhost-user", "virtio", "vdpa"]
+description = "a pure rust library for vdpa, vhost and vhost-user"
+authors = ["Liu Jiang <gerry@linux.alibaba.com>"]
+repository = "https://github.com/rust-vmm/vhost"
+documentation = "https://docs.rs/vhost"
+readme = "README.md"
+license = "Apache-2.0 OR BSD-3-Clause"
+edition = "2021"
+
+[package.metadata.docs.rs]
+all-features = true
+
+[features]
+default = []
+test-utils = []
+vhost-vsock = []
+vhost-kern = []
+vhost-vdpa = ["vhost-kern"]
+vhost-net = ["vhost-kern"]
+vhost-user = []
+vhost-user-frontend = ["vhost-user"]
+vhost-user-backend = ["vhost-user"]
+gpu-socket = ["vhost-user"]
+xen = ["vm-memory/xen"]
+postcopy = []
+
+[dependencies]
+bitflags = "2.4"
+libc = "0.2.39"
+uuid = { version = "1.8.0", features=["v4", "fast-rng", "macro-diagnostics"] }
+
+vmm-sys-util = "0.12.1"
+vm-memory = { version = "0.15.0", features=["backend-mmap"] }
+
+[dev-dependencies]
+tempfile = "3.2.0"
+serial_test = "3.0"
