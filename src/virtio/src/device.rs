@@ -194,7 +194,7 @@ impl VirtioDeviceCommon {
         // Create a mmap region with proper permissions.
         let mmap_region = match MmapRegion::build(
             Some(FileOffset::new(file, mmap_offset)),
-            base_addr as usize + size as usize,
+            size as usize,
             PROT_READ | PROT_WRITE,
             MAP_SHARED,
         ) {
