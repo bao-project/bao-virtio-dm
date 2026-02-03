@@ -489,12 +489,12 @@ checksum = "68d0df4f5ad79b1dc81b5913ac737e24a84dcd5100f36ed953a1faec18aba241"
 [[package]]
 name = "virtio-bindings"
 version = "0.2.3"
-source = "git+https://github.com/joaopeixoto13/vm-virtio?branch=virtio-actions#8b2214bbc4e0091f216dd011385ad2cdd1384c2c"
+source = "git+https://github.com/joaopeixoto13/vm-virtio?branch=virtio-actions#76416a7e559be9372b4ad96f2117979f7470f120"
 
 [[package]]
 name = "virtio-blk"
 version = "0.1.0"
-source = "git+https://github.com/joaopeixoto13/vm-virtio?branch=virtio-actions#8b2214bbc4e0091f216dd011385ad2cdd1384c2c"
+source = "git+https://github.com/joaopeixoto13/vm-virtio?branch=virtio-actions#76416a7e559be9372b4ad96f2117979f7470f120"
 dependencies = [
  "log",
  "virtio-bindings 0.2.3 (git+https://github.com/joaopeixoto13/vm-virtio?branch=virtio-actions)",
@@ -507,7 +507,7 @@ dependencies = [
 [[package]]
 name = "virtio-console"
 version = "0.1.0"
-source = "git+https://github.com/joaopeixoto13/vm-virtio?branch=virtio-actions#8b2214bbc4e0091f216dd011385ad2cdd1384c2c"
+source = "git+https://github.com/joaopeixoto13/vm-virtio?branch=virtio-actions#76416a7e559be9372b4ad96f2117979f7470f120"
 dependencies = [
  "virtio-bindings 0.2.3 (git+https://github.com/joaopeixoto13/vm-virtio?branch=virtio-actions)",
  "virtio-queue",
@@ -517,7 +517,7 @@ dependencies = [
 [[package]]
 name = "virtio-device"
 version = "0.1.0"
-source = "git+https://github.com/joaopeixoto13/vm-virtio?branch=virtio-actions#8b2214bbc4e0091f216dd011385ad2cdd1384c2c"
+source = "git+https://github.com/joaopeixoto13/vm-virtio?branch=virtio-actions#76416a7e559be9372b4ad96f2117979f7470f120"
 dependencies = [
  "log",
  "virtio-bindings 0.2.3 (git+https://github.com/joaopeixoto13/vm-virtio?branch=virtio-actions)",
@@ -528,7 +528,7 @@ dependencies = [
 [[package]]
 name = "virtio-queue"
 version = "0.13.0"
-source = "git+https://github.com/joaopeixoto13/vm-virtio?branch=virtio-actions#8b2214bbc4e0091f216dd011385ad2cdd1384c2c"
+source = "git+https://github.com/joaopeixoto13/vm-virtio?branch=virtio-actions#76416a7e559be9372b4ad96f2117979f7470f120"
 dependencies = [
  "log",
  "virtio-bindings 0.2.3 (git+https://github.com/joaopeixoto13/vm-virtio?branch=virtio-actions)",
@@ -539,7 +539,7 @@ dependencies = [
 [[package]]
 name = "virtio-vsock"
 version = "0.7.0"
-source = "git+https://github.com/joaopeixoto13/vm-virtio?branch=virtio-actions#8b2214bbc4e0091f216dd011385ad2cdd1384c2c"
+source = "git+https://github.com/joaopeixoto13/vm-virtio?branch=virtio-actions#76416a7e559be9372b4ad96f2117979f7470f120"
 dependencies = [
  "virtio-bindings 0.2.3 (git+https://github.com/joaopeixoto13/vm-virtio?branch=virtio-actions)",
  "virtio-queue",
