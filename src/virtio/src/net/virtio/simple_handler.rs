@@ -26,6 +26,7 @@ const MAX_BUFFER_SIZE: usize = 65562;
 const RXQ_INDEX: u16 = 0;
 const TXQ_INDEX: u16 = 1;
 
+#[allow(dead_code)]
 #[derive(Debug)]
 pub enum Error {
     GuestMemory(vm_memory::GuestMemoryError),
