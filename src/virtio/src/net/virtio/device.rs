@@ -19,7 +19,7 @@ use virtio_bindings::virtio_config::VIRTIO_F_IN_ORDER;
 use virtio_bindings::virtio_net::{
     VIRTIO_NET_F_CSUM, VIRTIO_NET_F_GUEST_CSUM, VIRTIO_NET_F_GUEST_TSO4, VIRTIO_NET_F_GUEST_TSO6,
     VIRTIO_NET_F_GUEST_UFO, VIRTIO_NET_F_HOST_TSO4, VIRTIO_NET_F_HOST_TSO6, VIRTIO_NET_F_HOST_UFO,
-    VIRTIO_NET_F_MAC,
+    VIRTIO_NET_F_MAC, VIRTIO_NET_F_MRG_RXBUF,
 };
 use virtio_device::{VirtioConfig, VirtioDeviceActions, VirtioDeviceType, VirtioMmioDevice};
 use virtio_queue::Queue;
@@ -90,6 +90,7 @@ impl VirtioDeviceT for VirtioNet {
             | (1 << VIRTIO_F_IN_ORDER)
             | (1 << VIRTIO_NET_F_CSUM)
             | (1 << VIRTIO_NET_F_GUEST_CSUM)
+            | (1 << VIRTIO_NET_F_MRG_RXBUF)
             | (1 << VIRTIO_NET_F_GUEST_TSO4)
             | (1 << VIRTIO_NET_F_GUEST_TSO6)
             | (1 << VIRTIO_NET_F_GUEST_UFO)
@@ -147,14 +148,22 @@ impl VirtioDeviceActions for VirtioNet {
         // Create the tap device.
         let tap = Tap::open_named(self.tap_name.as_str())?;
 
-        // Set offload flags to match the relevant virtio features of the device (for now,
-        // statically set in the constructor.
-        tap.set_offload(
-            bindings::TUN_F_CSUM
-                | bindings::TUN_F_UFO
-                | bindings::TUN_F_TSO4
-                | bindings::TUN_F_TSO6,
-        )?;
+        // driver_features is already populated by activate() time
+        let df = self.common.config.driver_features;
+        let mut flags = 0;
+        if df & (1 << VIRTIO_NET_F_GUEST_CSUM) != 0 {
+            flags |= bindings::TUN_F_CSUM;
+        }
+        if df & (1 << VIRTIO_NET_F_GUEST_TSO4) != 0 {
+            flags |= bindings::TUN_F_TSO4;
+        }
+        if df & (1 << VIRTIO_NET_F_GUEST_TSO6) != 0 {
+            flags |= bindings::TUN_F_TSO6;
+        }
+        if df & (1 << VIRTIO_NET_F_GUEST_UFO) != 0 {
+            flags |= bindings::TUN_F_UFO;
+        }
+        tap.set_offload(flags)?; // 0 for a minimal guest, full set for Linux
 
         // The layout of the header is specified in the standard and is 12 bytes in size. We
         // should define this somewhere.
@@ -172,7 +181,8 @@ impl VirtioDeviceActions for VirtioNet {
         // Create the inner handler.
         let rxq = clone_queue(&self.common.config.queues[0]);
         let txq = clone_queue(&self.common.config.queues[1]);
-        let inner = SimpleHandler::new(driver_notify, rxq, txq, tap, self.common.mem());
+        let mergeable = df & (1 << VIRTIO_NET_F_MRG_RXBUF) != 0;
+        let inner = SimpleHandler::new(driver_notify, rxq, txq, tap, self.common.mem(), mergeable);
 
         // Create the queue handler.
         let handler = Arc::new(Mutex::new(QueueHandler {
