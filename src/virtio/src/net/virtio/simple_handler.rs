@@ -193,14 +193,17 @@ impl<S: SignalUsedQueue> SimpleHandler<S> {
         Ok(())
     }
 
+    // Associated fn (not `&mut self`) so the caller can pass `tap`/`txbuf` as disjoint borrows
+    // while still holding the avail-ring iterator that borrows `txq`.
     fn send_frame_from_chain(
-        &mut self,
+        tap: &mut Tap,
+        txbuf: &mut [u8],
         chain: &mut DescriptorChain<&GuestMemoryMmap>,
     ) -> result::Result<u32, Error> {
         let mut count = 0;
 
         while let Some(desc) = chain.next() {
-            let left = self.txbuf.len() - count;
+            let left = txbuf.len() - count;
             let len = desc.len() as usize;
 
             if len > left {
@@ -210,35 +213,67 @@ impl<S: SignalUsedQueue> SimpleHandler<S> {
 
             chain
                 .memory()
-                .read_slice(&mut self.txbuf[count..count + len], desc.addr())
+                .read_slice(&mut txbuf[count..count + len], desc.addr())
                 .map_err(Error::GuestMemory)?;
 
             count += len;
         }
 
-        self.tap.write(&self.txbuf[..count]).map_err(Error::Tap)?;
+        tap.write(&txbuf[..count]).map_err(Error::Tap)?;
 
         Ok(count as u32)
     }
 
     pub fn process_txq(&mut self) -> result::Result<(), Error> {
+        // Heads of consumed chains, flushed to the used ring in batches. This lets us drain with a
+        // single iterator (one avail-index read per batch instead of per packet), never clone the
+        // guest memory map per packet, and signal the driver once per drain instead of per packet.
+        const TX_BATCH: usize = 256;
+        let mut heads: [u16; TX_BATCH] = [0u16; TX_BATCH];
+        let mut did_work = false;
+
         loop {
             self.txq.disable_notification(&self.mem)?;
 
-            while let Some(mut chain) = self.txq.iter(&self.mem.clone())?.next() {
-                self.send_frame_from_chain(&mut chain)?;
+            loop {
+                let mut n = 0usize;
+                {
+                    let mut iter = self.txq.iter(&self.mem)?;
+                    while n < TX_BATCH {
+                        let mut chain = match iter.next() {
+                            Some(c) => c,
+                            None => break,
+                        };
+                        heads[n] = chain.head_index();
+                        Self::send_frame_from_chain(&mut self.tap, &mut self.txbuf, &mut chain)?;
+                        n += 1;
+                    }
+                }
 
-                self.txq.add_used(chain.memory(), chain.head_index(), 0)?;
-
-                if self.txq.needs_notification(&self.mem)? {
-                    self.driver_notify.signal_used_queue(TXQ_INDEX);
+                // The iterator (and its borrow of `txq`) is dropped here, so we can return the
+                // consumed buffers to the guest.
+                for &head in heads.iter().take(n) {
+                    self.txq.add_used(&self.mem, head, 0)?;
+                }
+                if n > 0 {
+                    did_work = true;
+                }
+                if n < TX_BATCH {
+                    break;
                 }
             }
 
             if !self.txq.enable_notification(&self.mem)? {
-                return Ok(());
+                break;
             }
         }
+
+        // Single batched used-buffer notification for the whole drain.
+        if did_work && self.txq.needs_notification(&self.mem)? {
+            self.driver_notify.signal_used_queue(TXQ_INDEX);
+        }
+
+        Ok(())
     }
 
     pub fn process_rxq(&mut self) -> result::Result<(), Error> {
