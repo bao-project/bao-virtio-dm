@@ -180,10 +180,16 @@ impl VirtioDeviceActions for VhostNet {
         // Get the device features.
         let supported_backend_features = self.net.get_features().unwrap();
 
-        // Set the device features.
-        self.net
-            .set_features(self.vhost.features() & supported_backend_features)
-            .unwrap();
+        // The ring layout follows what the driver accepted, not what was offered: a driver may
+        // decline mergeable buffers or the event index, and vhost must agree with it
+        let driver_features = self.virtio.config.driver_features & supported_backend_features;
+        log::info!(
+            "virtio-net: offered 0x{:x}, driver accepted 0x{:x}, vhost gets 0x{:x}",
+            self.vhost.features(),
+            self.virtio.config.driver_features,
+            driver_features
+        );
+        self.net.set_features(driver_features).unwrap();
 
         // Update the memory table.
         self.net
