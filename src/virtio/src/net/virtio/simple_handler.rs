@@ -122,9 +122,14 @@ impl<S: SignalUsedQueue> SimpleHandler<S> {
                         first_hdr_addr = Some(desc.addr());
                     }
                     let len = cmp::min(num_bytes - offset, desc.len() as usize);
-                    self.mem
+                    // A buffer the device cannot reach drops this frame, not the device
+                    if let Err(e) = self
+                        .mem
                         .write_slice(&self.rxbuf[offset..offset + len], desc.addr())
-                        .map_err(Error::GuestMemory)?;
+                    {
+                        warn!("rx buffer at {:#x} unreachable: {:?}", desc.addr().0, e);
+                        break;
+                    }
                     offset += len;
                 }
                 used[nbufs] = (head, (offset - start) as u32);
@@ -146,9 +151,12 @@ impl<S: SignalUsedQueue> SimpleHandler<S> {
         // already copied above, so patch the field directly in guest memory.
         if self.mergeable {
             if let Some(addr) = first_hdr_addr {
-                self.mem
+                if let Err(e) = self
+                    .mem
                     .write_slice(&(nbufs as u16).to_le_bytes(), GuestAddress(addr.0 + 10))
-                    .map_err(Error::GuestMemory)?;
+                {
+                    warn!("rx header at {:#x} unreachable: {:?}", addr.0, e);
+                }
             }
         }
 
@@ -245,7 +253,13 @@ impl<S: SignalUsedQueue> SimpleHandler<S> {
                             None => break,
                         };
                         heads[n] = chain.head_index();
-                        Self::send_frame_from_chain(&mut self.tap, &mut self.txbuf, &mut chain)?;
+                        // The chain is consumed either way: a frame the device cannot read or the
+                        // tap will not take is dropped, as a real NIC would
+                        if let Err(e) =
+                            Self::send_frame_from_chain(&mut self.tap, &mut self.txbuf, &mut chain)
+                        {
+                            warn!("tx frame dropped: {:?}", e);
+                        }
                         n += 1;
                     }
                 }

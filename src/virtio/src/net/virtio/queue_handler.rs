@@ -47,16 +47,18 @@ impl MutEventSubscriber for QueueHandler {
         }
 
         match events.data() {
+            // Data-path errors are logged and the device keeps running: the driver sees a
+            // dropped frame, not a dead adapter
             TAPFD_DATA => {
                 if let Err(e) = self.inner.process_tap() {
-                    self.handle_error(format!("Process tap error {:?}", e), ops);
+                    error!("Process tap error {:?}", e);
                 }
             }
             RX_IOEVENT_DATA => {
                 if self.rx_ioevent.read().is_err() {
                     self.handle_error("Rx ioevent read", ops);
                 } else if let Err(e) = self.inner.process_rxq() {
-                    self.handle_error(format!("Process rx error {:?}", e), ops);
+                    error!("Process rx error {:?}", e);
                 }
             }
             TX_IOEVENT_DATA => {
@@ -64,7 +66,7 @@ impl MutEventSubscriber for QueueHandler {
                     self.handle_error("Tx ioevent read", ops);
                 }
                 if let Err(e) = self.inner.process_txq() {
-                    self.handle_error(format!("Process tx error {:?}", e), ops);
+                    error!("Process tx error {:?}", e);
                 }
             }
             _ => self.handle_error("Unexpected data", ops),
