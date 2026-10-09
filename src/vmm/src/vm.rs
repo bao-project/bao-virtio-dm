@@ -6,6 +6,7 @@ use event_manager::{EventManager, MutEventSubscriber};
 use std::sync::{Arc, Mutex};
 use virtio::block::virtio::device::VirtioBlock;
 use virtio::console::virtio::device::VirtioConsole;
+use virtio::input::virtio::device::VirtioInput;
 use virtio::device::VirtioDeviceT;
 use virtio::device::{VirtioDataPlane, VirtioDevType, VirtioDeviceType};
 use virtio::fs::vhost_user::device::VhostUserFs;
@@ -151,6 +152,16 @@ impl Vm {
                 VirtioDataPlane::Virtio => Ok(VirtioDeviceType::VirtioConsole(
                     VirtioConsole::new(config, device_manager, event_manager, device_model)
                         .unwrap(),
+                )),
+                _ => Err(Error::WrongDeviceConfiguration(
+                    VirtioDevType::to_string(&device_type),
+                    VirtioDataPlane::to_string(&data_plane),
+                )),
+            },
+            // Input device.
+            VirtioDevType::Input => match data_plane {
+                VirtioDataPlane::Virtio => Ok(VirtioDeviceType::VirtioInput(
+                    VirtioInput::new(config, device_manager, event_manager, device_model).unwrap(),
                 )),
                 _ => Err(Error::WrongDeviceConfiguration(
                     VirtioDevType::to_string(&device_type),

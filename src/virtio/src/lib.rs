@@ -2,6 +2,7 @@ pub mod block;
 pub mod console;
 pub mod device;
 pub mod fs;
+pub mod input;
 pub mod mmio;
 pub mod net;
 pub mod vhost;

@@ -121,6 +121,8 @@ pub struct DeviceConfig {
     pub socket_path: Option<String>,
     // Console device specific fields
     pub pty_alias: Option<String>,
+    // Input device specific field: a fixed path for the sink's evdev node
+    pub evdev_alias: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
