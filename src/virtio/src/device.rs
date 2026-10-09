@@ -1,6 +1,7 @@
 use super::block::virtio::device::VirtioBlock;
 use super::console::virtio::device::VirtioConsole;
 use super::fs::vhost_user::device::VhostUserFs;
+use super::input::virtio::device::VirtioInput;
 use super::mmio::MmioConfig;
 use super::mmio::VIRTIO_MMIO_INT_VRING;
 use super::mmio::VIRTIO_MMIO_QUEUE_NOTIFY_OFFSET;
@@ -43,6 +44,7 @@ pub enum VirtioDeviceType {
     VhostUserVsock(Arc<Mutex<VhostUserVsock>>),
     VirtioNet(Arc<Mutex<VirtioNet>>),
     VirtioConsole(Arc<Mutex<VirtioConsole>>),
+    VirtioInput(Arc<Mutex<VirtioInput>>),
     Unknown,
 }
 
@@ -483,7 +485,7 @@ impl VirtioDevType {
             VirtioDevType::Balloon => (0, 0),
             VirtioDevType::Gpu => (0, 0),
             VirtioDevType::Fs9P => (0, 0),
-            VirtioDevType::Input => (0, 0),
+            VirtioDevType::Input => (2, 64),
             VirtioDevType::Vsock => (3, 1024), // Virtio spec says 3 queues, but vhost/vhost-user only manage 2 (RX/TX)
             VirtioDevType::Mem => (0, 0),
             VirtioDevType::Fs => (2, 1024),
