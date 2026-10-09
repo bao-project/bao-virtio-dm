@@ -52,7 +52,7 @@ impl BaoDeviceModel {
         };
 
         unsafe {
-            let ret = ioctl(fd, BAO_IOCTL_IO_DM_GET_INFO(), &mut dm_info);
+            let ret = ioctl(fd, BAO_IOCTL_IO_DM_GET_INFO() as _, &mut dm_info);
 
             if ret < 0 {
                 return Err(Error::OpenFdFailed(
@@ -91,7 +91,7 @@ impl BaoDeviceModel {
             request_id: 0,
         };
         unsafe {
-            let ret = ioctl(self.devmodel_fd, BAO_IOCTL_IO_ATTACH_CLIENT(), &mut request);
+            let ret = ioctl(self.devmodel_fd, BAO_IOCTL_IO_ATTACH_CLIENT() as _, &mut request);
 
             if ret < 0 {
                 return Err(Error::BaoIoctlError(
@@ -117,7 +117,7 @@ impl BaoDeviceModel {
         unsafe {
             let ret = ioctl(
                 self.devmodel_fd,
-                BAO_IOCTL_IO_REQUEST_NOTIFY_COMPLETED(),
+                BAO_IOCTL_IO_REQUEST_NOTIFY_COMPLETED() as _,
                 &req,
             );
 
@@ -164,7 +164,7 @@ impl BaoDeviceModel {
 
         // Call the ioctl to register the ioeventfd.
         unsafe {
-            let ret = ioctl(self.devmodel_fd, BAO_IOCTL_IOEVENTFD(), &ioeventfd);
+            let ret = ioctl(self.devmodel_fd, BAO_IOCTL_IOEVENTFD() as _, &ioeventfd);
 
             if ret < 0 {
                 return Err(Error::RegisterIoevent(errno::Error::last()));
@@ -191,7 +191,7 @@ impl BaoDeviceModel {
 
         // Call the ioctl to register the irqfd.
         unsafe {
-            let ret = ioctl(self.devmodel_fd, BAO_IOCTL_IRQFD(), &irqfd);
+            let ret = ioctl(self.devmodel_fd, BAO_IOCTL_IRQFD() as _, &irqfd);
 
             if ret < 0 {
                 return Err(Error::RegisterIrqfd(errno::Error::last()));
